@@ -1,0 +1,49 @@
+---
+- name: Update Nimble
+  hosts: IP
+  become: yes  ### To run tasks as sudo
+
+  tasks:
+    - name: Download the latest .deb package from GitHub
+      shell: |
+        wget -O ~/Downloads/mcutils_latest.deb $(curl -s https://api.github.com/repos/MeghComputing/mcutils/releases/latest | grep "browser_download_url.*\.deb" | cut -d : -f 2,3 | tr -d \")
+
+    - name: Copy .deb file to the target server
+      copy:
+        src: ~/Downloads/mcutils_latest.deb
+        dest: /tmp/mcutils_latest.deb
+
+    - name: Change directory to Nimble 
+      command: cd /opt/megh-vas/nimble
+      args:
+        chdir: /opt/megh-vas/nimble
+
+    - name: Stop Nimble ### To stop Docker containers
+      command: docker-compose down
+
+    - name: Install the downloaded mcutils package
+      apt:
+        deb: /tmp/mcutils_latest.deb
+      args:
+        chdir: /opt/megh-vas/nimble   ### Change directory before installing the package
+
+    - name: Install New version of Nimble 
+      command: sudo mcutils install vas-nimble -v v<target version>
+      args:
+        chdir: /opt/megh-vas/nimble   ### Change directory before installing Nimble
+
+    - name: To confirm restart of services
+      pause:
+        prompt: "Type 'Y' when prompted to restart services on reboot"
+
+    - name: Edit the file in Vi editor  ###To make changes in Vi
+      replace:
+        path: opt/megh-vas/nimble/docker-compose.yaml
+        regexp: 'NIMBLE_DECODER_DEFAULT=.+'
+        replace: 'NIMBLE_DECODER_DEFAULT=ffmpeg'
+      register: replace_result
+
+    - name: Start Nimble ### To start Docker containers
+      command: docker-compose up -d
+      args:
+        chdir: /opt/megh-vas/nimble   ### Change directory before starting Docker Compose
