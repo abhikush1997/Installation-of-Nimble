@@ -1,6 +1,6 @@
 ---
-- name: User name
-  hosts: IP address
+- name: User_name
+  hosts: IP_address
   become: yes  ### To run tasks as sudo
 
   tasks:
