@@ -1,6 +1,6 @@
 ---
-- name: Update Nimble
-  hosts: IP
+- name: User name
+  hosts: IP address
   become: yes  ### To run tasks as sudo
 
   tasks:
